@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Web Sockets Project</title>
+	<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+	<style type="text/css">
+		body {
+		    font:12px arial;
+		    color: #222;
+		    text-align:center;
+		    padding:35px; }
+		  
+		form, p, span {
+		    margin:0;
+		    padding:0; }
+		  
+		input { font:12px arial; }
+		  
+		a {
+		    color:#0000FF;
+		    text-decoration:none; }
+		  
+		    a:hover { text-decoration:underline; }
+		  
+		#wrapper, #loginform {
+		    margin:0 auto;
+		    padding-bottom:25px;
+		    background:#EBF4FB;
+		    width:504px;
+		    border:1px solid #ACD8F0; }
+		  
+		#loginform { padding-top:18px; }
+		  
+		    #loginform p { margin: 5px; }
+		  
+		#chatbox {
+		    text-align:left;
+		    margin:0 auto;
+		    margin-bottom:25px;
+		    padding:10px;
+		    background:#fff;
+		    height:270px;
+		    width:430px;
+		    border:1px solid #ACD8F0;
+		    overflow:auto; }
+		  
+		#usermsg {
+		    width:395px;
+		    border:1px solid #ACD8F0; }
+		  
+		#submit { width: 60px; }
+		  
+		.error { color: #ff0000; }
+		  
+		#menu { padding:12.5px 25px 12.5px 25px; }
+		  
+		.welcome { float:left; }
+		  
+		.logout { float:right; }
+		  
+		.msgln { margin:0 0 2px 0; }
+
+		#items{ list-style: none; }
+
+		#users{ list-style: none; padding: 0px;}
+
+		.red-text{ color: red; }
+		.blue-text{ color: blue; }
+		.grey-text{ color: grey; }
+		.italic{font-style: italic;}
+	</style>
+</head>
+<body>
+	<main>
+		<div id="wrapper">
+		    <div id="menu">
+		        <p class="welcome">Welcome to a simple chat app! You may type <b>!server</b> for a list of commands<b></b></p>
+		        <div style="clear:both"></div>
+		    </div>
+		    <div id="chatbox">
+		    	<ul id="items">
+		    	</ul>
+		    </div>
+		     
+		    <form id="Chat" name="message" action="">
+		        <input name="usermsg" type="text" id="usermsg" size="63" autocomplete="off" />
+		        <input name="submitmsg" type="submit"  id="submitmsg" value="Send" />
+		    </form>
+		    <p>User List:</p>
+		    <ul id="users">
+		    	
+		    </ul>
+		</div>
+	</main>
+<script type="text/javascript">
+	$(function(){
+
+		//Prompt for a username
+		var userName = prompt("Please enter a username.");
+		//check and see if user has entered a username
+		if (userName != null && userName != "") {
+			var options = {'sync disconnect on unload':false};
+			var socket = io.connect("http://localhost", options);
+			//When connected, tell the server your name
+			socket.emit("newUser", {Name: userName});
+
+			//set focus on chat input
+			$("#usermsg").focus();
+
+			//Get chat log if there are any
+			socket.on("chatLog", function(data){
+				$("#items").append(data.logs);
+				scroll();
+			});
+
+			//When a new user connects (also used as your first connection)
+			socket.on("newConnection", function(data){
+				console.log(data.Name);
+				$("#items").append("<li><span class='red-text'>Server: </span>"+data.Name+" has joined the conversation!</li>");
+			});	
+
+			//When a user has disconnected
+			socket.on("terminatedConnection", function(data){
+				console.log(data.Name+" has left");
+				$("#items").append("<li><span class='red-text'>Server: </span>"+data.Name+" has left the conversation.</li>");
+			});
+
+			//When send button is hit
+			$("#Chat").submit(function(e){
+				e.preventDefault();
+				socket.emit("message", {Msg: $("#usermsg").val()});
+			    $("#usermsg").val("");
+			    $("#usermsg").focus();
+			});
+
+			//When a message is recieved
+			socket.on("newMessage", function(data){
+				$("#items").append("<li><span class='blue-text'>"+data.userName+": </span>"+data.Msg+"</li>");
+				scroll();
+			});
+
+			//When recieving a server command
+			socket.on("server", function(data){
+				if (data.Type == "helpMessage") {
+					$("#items").append("<li><span class='grey-text italic'>Server: "+data.Msg+"</span></li>");
+				}
+			});
+
+			//new set of user list
+			socket.on("userList", function(data){
+				console.log(data.array);
+				var users = data.array;
+				$("#users").empty();
+				for (var i = 0; i < users.length; i++) {
+				    $("#users").append("<li class='blue-text'>"+users[i]+"</li>")
+				}
+				
+			});
+
+
+
+		}else{
+			//user has not entered a username
+			alert("No username input, please refresh your browser and type in a name.");
+		}
+
+		//Function to scroll down the overflown div (chat)
+		function scroll() {
+		    var div = $("#chatbox");
+		    div.scrollTop(div.prop('scrollHeight'));
+		}		
+	});
+</script>
+</body>
+</html>

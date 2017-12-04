@@ -1,0 +1,14 @@
+{
+  "name": "iochat",
+  "version": "1.0.0",
+  "description": "Testing out websockets",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nicolas J. Mendez",
+  "license": "ISC",
+  "dependencies":{
+  	"socket.io":"*"
+  }
+}
