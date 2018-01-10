@@ -4,7 +4,7 @@ var app = require('http').createServer();
 var io = require('socket.io')(app);
 var fs = require('fs');
 //Start listening for connectiosn
-app.listen(80);
+app.listen(8080);
 if (debugMode == 1) {console.log("server running");}
 
 //user connection handlers
